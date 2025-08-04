@@ -3,6 +3,9 @@
 .idea
 .vscode
 
+*.yml
+
+build
 logs
 db
 modules

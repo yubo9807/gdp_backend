@@ -3,7 +3,7 @@ package controller
 import (
 	"encoding/base64"
 	"encoding/json"
-	"gdp/env"
+	"gdp/service/configs"
 	"gdp/service/middleware"
 	"gdp/utils"
 	"os"
@@ -21,11 +21,12 @@ type User struct {
 
 // 获取用户列表
 func userList() ([]User, error) {
-	content, err := os.ReadFile(env.UserDataFileName)
+	userDataFilename := configs.Service.DbDir + "user.json"
+	content, err := os.ReadFile(userDataFilename)
 	if err != nil {
-		utils.FileCreateWithDirs(env.UserDataFileName)
+		utils.FileCreateWithDirs(userDataFilename)
 		content = []byte("[]")
-		os.WriteFile(env.UserDataFileName, content, 0644)
+		os.WriteFile(userDataFilename, content, 0644)
 	}
 
 	users := []User{}
@@ -46,7 +47,9 @@ func userAdd(user User) error {
 	if err != nil {
 		return err
 	}
-	err = os.WriteFile(env.UserDataFileName, content, 0644)
+
+	userDataFilename := configs.Service.DbDir + "user.json"
+	err = os.WriteFile(userDataFilename, content, 0644)
 	if err != nil {
 		return err
 	}
@@ -206,7 +209,8 @@ func Activated(c *gin.Context) {
 	if err != nil {
 		ctx.ErrorCustom(err.Error())
 	}
-	err = os.WriteFile(env.UserDataFileName, content, 0644)
+	userDataFilename := configs.Service.DbDir + "user.json"
+	err = os.WriteFile(userDataFilename, content, 0644)
 	if err != nil {
 		ctx.ErrorCustom(err.Error())
 	}

@@ -13,7 +13,6 @@ const (
 	PackagePowerName  = "power.json"
 	ServiceConfigName = "config_service.yml"
 	CommandConfigName = "config_command.yml"
-	UserDataFileName  = "./db/user.json"
 )
 
 var CommandDir string
