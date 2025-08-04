@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"fmt"
+	"encoding/json"
 	"gdp/env"
 	"gdp/service/configs"
 	"gdp/service/middleware"
@@ -37,35 +37,57 @@ func Publish(c *gin.Context) {
 	files := form.File["file"]
 	filepaths := form.Value["filepath"]
 
+	// 当前账号有无权限
+	packageName := configs.Service.ModulesDir + env.Separator + name
+	powerFilename := packageName + env.Separator + env.PackagePowerName
+	userInfo := GetUserInfo(c)
+	if _, err := os.Stat(powerFilename); err != nil {
+		// 第一次发布版本
+		utils.FileCreateWithDirs(powerFilename)
+		powerConfig := PowerConfig{
+			Author:        userInfo.Name,
+			Collaborators: []string{},
+		}
+		content, _ := json.Marshal(powerConfig)
+		os.WriteFile(powerFilename, content, 0644)
+	} else {
+		// 后期维护，检查协作者
+		content, _ := os.ReadFile(powerFilename)
+		powerConfig := PowerConfig{}
+		json.Unmarshal(content, &powerConfig)
+		powerConfig.Collaborators = append(powerConfig.Collaborators, userInfo.Name)
+		isCollaborators := utils.SliceSome(powerConfig.Collaborators, func(v string, i int) bool {
+			return v == userInfo.Name
+		})
+		if !isCollaborators {
+			ctx.ErrorAuth("你还不是这个包的协作者")
+			return
+		}
+	}
+
 	rootUrl := configs.Service.ModulesDir + env.Separator + name + env.Separator + version
 	for i, file := range files {
 		filepath := filepaths[i]
-		f, err1 := file.Open()
-		if err1 != nil {
-			ctx.ErrorParams(err1.Error())
+		f, openErr := file.Open()
+		if openErr != nil {
+			ctx.ErrorParams(openErr.Error())
 			return
 		}
 		defer f.Close()
 
 		targetFilepath := rootUrl + env.Separator + filepath
-		err2 := utils.FileCreateWithDirs(targetFilepath)
-		if err2 != nil {
-			ctx.ErrorCustom(err2.Error())
-			return
-		}
+		utils.FileCreateWithDirs(targetFilepath)
 
-		data, err2 := io.ReadAll(f)
-		if err2 != nil {
-			ctx.ErrorParams(err2.Error())
+		data, readErr := io.ReadAll(f)
+		if readErr != nil {
+			ctx.ErrorParams(readErr.Error())
 			return
 		}
-		err3 := os.WriteFile(targetFilepath, data, 0644)
-		if err3 != nil {
-			ctx.ErrorParams(err3.Error())
+		writeErr := os.WriteFile(targetFilepath, data, 0644)
+		if writeErr != nil {
+			ctx.ErrorParams(writeErr.Error())
 			return
 		}
-
-		fmt.Println(file, filepath)
 	}
 
 	ctx.Success()
@@ -89,7 +111,7 @@ func Unpublish(c *gin.Context) {
 	rootUrl := packageFilePath + env.Separator + params.Version
 	_, statErr := os.Stat(rootUrl)
 	if statErr != nil {
-		ctx.ErrorCustom("package not exist")
+		ctx.ErrorCustom(params.Name + ": " + params.Version + " 版本已存在")
 		return
 	}
 
@@ -101,7 +123,7 @@ func Unpublish(c *gin.Context) {
 
 	// 空目录
 	files, _ := os.ReadDir(packageFilePath)
-	if len(files) == 0 {
+	if len(files) == 1 {
 		os.RemoveAll(packageFilePath)
 	}
 

@@ -9,13 +9,13 @@ import (
 
 type ContextCustom struct {
 	*gin.Context
-	startTime time.Time
-	Result    string
+	RequestTime time.Time
+	Result      string
 }
 
 func ContextMiddleware(c *gin.Context) {
 	customCtx := &ContextCustom{Context: c}
-	customCtx.startTime = time.Now()
+	customCtx.RequestTime = time.Now()
 	c.Set("customCtx", customCtx)
 	c.Next()
 }
@@ -41,7 +41,7 @@ func (c *ContextCustom) SuccessData(data interface{}) {
 		"code":    200,
 		"data":    data,
 		"msg":     "success",
-		"runTime": time.Since(c.startTime).String(),
+		"runTime": time.Since(c.RequestTime).String(),
 	}
 	c.JSON(200, m)
 	c.Abort()

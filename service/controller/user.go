@@ -136,7 +136,8 @@ func Verification(c *gin.Context) {
 	ctx.Next()
 }
 
-func getUserInfo(c *gin.Context) User {
+// 获取当前用户信息，在此之前必须使用 Verification
+func GetUserInfo(c *gin.Context) User {
 	value, _ := c.Get("userInfo")
 	info, _ := value.(User)
 	return info
@@ -144,7 +145,7 @@ func getUserInfo(c *gin.Context) User {
 
 func UserInfo(c *gin.Context) {
 	ctx := middleware.ContextGet(c)
-	info := getUserInfo(c)
+	info := GetUserInfo(c)
 	info.Pass = ""
 	ctx.SuccessData(info)
 }
@@ -166,7 +167,7 @@ func UserList(c *gin.Context) {
 func VerificationRole(role int) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		ctx := middleware.ContextGet(c)
-		info := getUserInfo(c)
+		info := GetUserInfo(c)
 		if info.Role != role {
 			ctx.ErrorAuth("Permission denied")
 			return

@@ -14,8 +14,6 @@ import (
 )
 
 func Log(c *gin.Context) {
-	requestTime := time.Now()
-
 	defer func() {
 		if msg := recover(); msg != nil {
 			debug.PrintStack()
@@ -25,17 +23,18 @@ func Log(c *gin.Context) {
 				"msg":  msgStr,
 			})
 			c.Abort()
-			logWrite(c, requestTime, "panic: "+msgStr+"\n"+string(debug.Stack()))
+			logWrite(c, "panic: "+msgStr+"\n"+string(debug.Stack()))
 		}
 	}()
 
 	c.Next()
 
-	logWrite(c, requestTime, "result: "+ContextGet(c).Result)
+	logWrite(c, "result: "+ContextGet(c).Result)
 }
 
-func logWrite(c *gin.Context, requestTime time.Time, msg string) {
-	t := strings.ReplaceAll(requestTime.String()[0:26], "-", "/")
+func logWrite(c *gin.Context, msg string) {
+	ctx := ContextGet(c)
+	t := strings.ReplaceAll(ctx.RequestTime.String()[0:26], "-", "/")
 
 	ip := c.ClientIP()
 	method := c.Request.Method
@@ -50,7 +49,7 @@ func logWrite(c *gin.Context, requestTime time.Time, msg string) {
 	body := string(bodyData)
 
 	content := t + "\t" + ip + "\t" + method + "\t" + path
-	runTime := time.Since(requestTime).String()
+	runTime := time.Since(ctx.RequestTime).String()
 	content += "\nstatus:" + strconv.Itoa(c.Writer.Status()) + "\trun_time:" + runTime
 	// content += header
 	if body != "" {

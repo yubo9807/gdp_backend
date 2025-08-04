@@ -10,6 +10,7 @@ const (
 	Separator   = string(filepath.Separator)
 
 	PackageConfigName = ProjectName + ".json"
+	PackagePowerName  = "power.json"
 	ServiceConfigName = "config_service.yml"
 	CommandConfigName = "config_command.yml"
 	UserDataFileName  = "./db/user.json"

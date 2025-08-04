@@ -12,8 +12,8 @@ import (
 func main() {
 	app := gin.Default()
 	server := app.Group(configs.Service.Prefix)
-	server.Use(middleware.Log)
 	server.Use(middleware.ContextMiddleware)
+	server.Use(middleware.Log)
 
 	server.GET("/file/catalog", controller.FileCatalog)
 	server.GET("/file/info", controller.FileInfo)
@@ -21,6 +21,7 @@ func main() {
 
 	server.POST("/publish", controller.Verification, controller.Publish)
 	server.DELETE("/unpublish", controller.Verification, controller.Unpublish)
+	server.PUT("/collaborators", controller.Verification, controller.Collaborators)
 	server.GET("/install", controller.Install)
 
 	server.POST("/user/register", controller.Register)
