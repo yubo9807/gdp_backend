@@ -1,0 +1,8 @@
+prefix: "/api"
+port: 9800  # 启动端口
+
+logDir: "./logs"  # 日志目录
+logReserveTime: 10  # 日志保留时间(d)
+
+modulesDir: "./modules"  # 模块目录
+allowedCatalogs: ["modules"]
